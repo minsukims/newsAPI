@@ -6,13 +6,25 @@
 .head-line svg {
   width: 430px;
 }
-.menus {
+.headline-menu {
+  display: flex;
   margin-top: 1em;
+  border-top: 1px solid #ebebeb;
+  border-bottom: 4px double black;
+  justify-content: center;
+  align-items: center;
+}
+.menus {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  border-top: 1px solid #ebebeb;
-  border-bottom: 4px double black;
+  margin: 0 auto;
+}
+.search {
+  margin-left: auto;
+}
+.menu-bar {
+  display: none;
 }
 .menus button {
   border: none;
@@ -28,4 +40,55 @@
 }
 .news {
   border-bottom: 2px solid black;
+}
+
+@media (max-width: 995px) {
+  .headline-menu {
+    position: relative;
+    height: 0px;
+    overflow: hidden;
+    transition: all 0.7s ease;
+  }
+  .headline-menu.open {
+    height: 400px;
+  }
+  .menu-bar {
+    display: block;
+    font-size: 2em;
+  }
+  .search {
+    display: flex;
+    position: absolute;
+    width: 100%;
+    left: 0;
+    top: 0;
+    background-color: green;
+    min-height: 30px;
+    margin-top: 10px;
+  }
+  .search > input {
+    min-width: 70%;
+  }
+  .search > button {
+    min-width: 30%;
+  }
+  .menus {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin: 0;
+    font-size: 1.5em;
+    min-height: 380px;
+  }
+  .menus button {
+    margin: 5px 0 5px 0;
+  }
+  .menus button:hover {
+    width: 100%;
+    text-align: left;
+  }
 }
