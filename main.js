@@ -2,9 +2,9 @@ let newsList = [];
 const menus = document.querySelectorAll(".menus button");
 const menuBar = document.querySelector("#menu-bar");
 const headlineMenu = document.querySelector("#headline-menu");
+const searchInput = document.querySelector("#search-input");
 menuBar.addEventListener("click", () => {
   headlineMenu.classList.toggle("open");
-
   const icon = menuBar.querySelector("i");
   if (headlineMenu.classList.contains("open")) {
     icon.classList.remove("fa-circle-chevron-down");
@@ -59,6 +59,12 @@ const getNewsByKeyword = async () => {
   newsList = data.articles;
   render();
 };
+
+searchInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    getNewsByKeyword();
+  }
+});
 
 const timeChange = (dateString) => {
   const now = new Date();

@@ -22,6 +22,18 @@
 }
 .search {
   margin-left: auto;
+  display: flex;
+}
+.search > input {
+  border-radius: 20px 0 0 20px;
+  padding-left: 10px;
+}
+.search > button {
+  border-radius: 0 20px 20px 0;
+}
+.search > button:hover {
+  background-color: #9e9c9c;
+  color: white;
 }
 .menu-bar {
   display: none;
@@ -62,9 +74,9 @@
     width: 100%;
     left: 0;
     top: 0;
-    background-color: green;
     min-height: 30px;
     margin-top: 10px;
+    overflow: hidden;
   }
   .search > input {
     min-width: 70%;
