@@ -3,6 +3,9 @@ const menus = document.querySelectorAll(".menus button");
 const menuBar = document.querySelector("#menu-bar");
 const headlineMenu = document.querySelector("#headline-menu");
 const searchInput = document.querySelector("#search-input");
+const searchClick = document.querySelector("#search-click");
+
+// 반응형 toggle 버튼
 menuBar.addEventListener("click", () => {
   headlineMenu.classList.toggle("open");
   const icon = menuBar.querySelector("i");
@@ -15,57 +18,73 @@ menuBar.addEventListener("click", () => {
   }
 });
 
+let url = new URL(
+  `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?`,
+);
+
+// url 응답 데이터 화면표시
+const getNews = async () => {
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (response.status === 200) {
+      if (data.articles.length === 0) {
+        throw new Error("No result for this search");
+      }
+      newsList = data.articles;
+      render();
+    } else {
+      throw new Error(data.message);
+    }
+    newsList = data.articles;
+    render();
+  } catch (error) {
+    console.log(error.message);
+    errorRender(error.message);
+  }
+};
+
 menus.forEach((menu) => {
   menu.addEventListener("click", (event) => getNewsByCategory(event));
 });
 
-console.log("mmm", menus);
-const getLatestNews = async () => {
-  const url = new URL(
+const getLatestNews = () => {
+  url = new URL(
     `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?`,
   );
-  console.log("uuu", url);
-  const response = await fetch(url);
-  const data = await response.json();
-  newsList = data.articles;
-
-  console.log("dddd", newsList);
-  render();
+  getNews();
 };
 
-const getNewsByCategory = async (event) => {
+// 카테고리 검색
+const getNewsByCategory = (event) => {
   const category = event.target.textContent.toLowerCase();
   console.log(category);
-  const url = new URL(
+  url = new URL(
     `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?category=${category}`,
   );
-  const response = await fetch(url);
-  const data = await response.json();
-  console.log("Ddd", data);
-  newsList = data.articles;
-  render();
+  getNews();
 };
 
-const getNewsByKeyword = async () => {
+// 검색어 검색
+const getNewsByKeyword = () => {
   const keyword = document.querySelector("#search-input").value;
 
   console.log(keyword);
-  const url = new URL(
+  url = new URL(
     `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?q=${keyword}`,
   );
-  const response = await fetch(url);
-  const data = await response.json();
-  console.log("Qqq", data);
-  newsList = data.articles;
-  render();
+  getNews();
 };
-
+// 검색 엔터키 이벤트
 searchInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     getNewsByKeyword();
   }
 });
+// 검색 클릭 이벤트
+searchClick.addEventListener("click", getNewsByKeyword);
 
+// 현재 시간으로부터 view에 보이는 뉴스가 얼마나 지났는지 확인하는 함수
 const timeChange = (dateString) => {
   const now = new Date();
   const past = new Date(dateString);
@@ -89,6 +108,7 @@ const timeChange = (dateString) => {
   return `${Math.floor(years)} years ago`;
 };
 
+// 렌더링 함수
 const render = () => {
   const newsHTML = newsList.map(
     (news) => `
@@ -116,6 +136,15 @@ const render = () => {
         </div>`,
   );
   document.querySelector("#news-board").innerHTML = newsHTML.join("");
+};
+
+const errorRender = (errorMessage) => {
+  const errorHTML = `<div class="alert alert-danger" role="alert">
+  A simple danger alert—check it out!
+  ${errorMessage}
+  </div>`;
+
+  document.querySelector("#news-board").innerHTML = errorHTML;
 };
 getLatestNews();
 
