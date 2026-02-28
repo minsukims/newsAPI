@@ -5,147 +5,217 @@ const headlineMenu = document.querySelector("#headline-menu");
 const searchInput = document.querySelector("#search-input");
 const searchClick = document.querySelector("#search-click");
 
-// 반응형 toggle 버튼
-menuBar.addEventListener("click", () => {
-  headlineMenu.classList.toggle("open");
-  const icon = menuBar.querySelector("i");
-  if (headlineMenu.classList.contains("open")) {
-    icon.classList.remove("fa-circle-chevron-down");
-    icon.classList.add("fa-circle-chevron-up");
-  } else {
-    icon.classList.remove("fa-circle-chevron-up");
-    icon.classList.add("fa-circle-chevron-down");
-  }
-});
-
 let url = new URL(
   `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?`,
 );
 
-// url 응답 데이터 화면표시
+let totalResults = 0;
+let page = 1;
+const pageSize = 10;
+const groupSize = 5;
+
+// 반응형 토글
+menuBar.addEventListener("click", () => {
+  headlineMenu.classList.toggle("open");
+  const icon = menuBar.querySelector("i");
+
+  if (headlineMenu.classList.contains("open")) {
+    icon.classList.replace("fa-circle-chevron-down", "fa-circle-chevron-up");
+  } else {
+    icon.classList.replace("fa-circle-chevron-up", "fa-circle-chevron-down");
+  }
+});
+
+// 뉴스 가져오기
 const getNews = async () => {
   try {
+    url.searchParams.set("page", page);
+    url.searchParams.set("pageSize", pageSize);
+
     const response = await fetch(url);
     const data = await response.json();
-    if (response.status === 200) {
-      if (data.articles.length === 0) {
-        throw new Error("No result for this search");
-      }
-      newsList = data.articles;
-      render();
-    } else {
+
+    if (response.status !== 200) {
       throw new Error(data.message);
     }
+
+    if (data.articles.length === 0) {
+      throw new Error("No result for this search");
+    }
+
     newsList = data.articles;
+    totalResults = data.totalResults;
     render();
+    paginationRender();
   } catch (error) {
-    console.log(error.message);
     errorRender(error.message);
   }
 };
 
-menus.forEach((menu) => {
-  menu.addEventListener("click", (event) => getNewsByCategory(event));
-});
-
+// 최신뉴스
 const getLatestNews = () => {
+  page = 1;
   url = new URL(
     `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?`,
   );
   getNews();
 };
 
-// 카테고리 검색
+// 카테고리
 const getNewsByCategory = (event) => {
+  page = 1;
+
   const category = event.target.textContent.toLowerCase();
-  console.log(category);
   url = new URL(
     `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?category=${category}`,
   );
+
   getNews();
 };
 
-// 검색어 검색
-const getNewsByKeyword = () => {
-  const keyword = document.querySelector("#search-input").value;
+menus.forEach((menu) => menu.addEventListener("click", getNewsByCategory));
 
-  console.log(keyword);
+// 검색
+const getNewsByKeyword = () => {
+  page = 1;
+
+  const keyword = searchInput.value;
+
   url = new URL(
     `https://noona-times-be-5ca9402f90d9.herokuapp.com/top-headlines?q=${keyword}`,
   );
+
   getNews();
 };
-// 검색 엔터키 이벤트
+
 searchInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    getNewsByKeyword();
-  }
+  if (event.key === "Enter") getNewsByKeyword();
 });
-// 검색 클릭 이벤트
 searchClick.addEventListener("click", getNewsByKeyword);
 
-// 현재 시간으로부터 view에 보이는 뉴스가 얼마나 지났는지 확인하는 함수
+// 시간 계산
 const timeChange = (dateString) => {
   const now = new Date();
   const past = new Date(dateString);
   const diff = (now - past) / 1000;
 
   if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)} days ago`;
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)} months ago`;
 
-  const minutes = diff / 60;
-  if (minutes < 60) return `${Math.floor(minutes)} minutes ago`;
-
-  const hours = minutes / 60;
-  if (hours < 24) return `${Math.floor(hours)} hours ago`;
-
-  const days = hours / 24;
-  if (days < 30) return `${Math.floor(days)} days ago`;
-
-  const months = days / 30;
-  if (months < 12) return `${Math.floor(months)} months ago`;
-
-  const years = months / 12;
-  return `${Math.floor(years)} years ago`;
+  return `${Math.floor(diff / 31536000)} years ago`;
 };
 
-// 렌더링 함수
+// 렌더
 const render = () => {
-  const newsHTML = newsList.map(
-    (news) => `
+  const newsHTML = newsList
+    .map(
+      (news) => `
     <div class="row news">
-          <div class="col-lg-4">
-            <img
-             class="news-img-size"
-             src="${news.urlToImage || "https://via.placeholder.com/300?text=no+image"}"
-             onerror="this.src='https://via.placeholder.com/300?text=no+image'"
-             style="opacity:0"
-             onload="this.style.opacity=1"
-            />
-          </div>
-          <div class="col-lg-8">
-            <h2>${news.title}</h2>
-            <p>
-              ${
-                news.description && news.description.length > 200
-                  ? news.description.slice(0, 200) + "..."
-                  : news.description || ""
-              }
-            </p>
-            <div>${news.source.name || "no source"} * ${timeChange(news.publishedAt)}</div>
-          </div>
-        </div>`,
-  );
-  document.querySelector("#news-board").innerHTML = newsHTML.join("");
+      <div class="col-lg-4">
+        <img
+          class="news-img-size"
+          src="${news.urlToImage || "https://via.placeholder.com/300?text=no+image"}"
+          onerror="this.src='https://via.placeholder.com/300?text=no+image'"
+        />
+      </div>
+      <div class="col-lg-8">
+        <h2>${news.title}</h2>
+        <p>
+          ${
+            news.description && news.description.length > 200
+              ? news.description.slice(0, 200) + "..."
+              : news.description || ""
+          }
+        </p>
+        <div>
+          ${news.source.name || "no source"} *
+          ${timeChange(news.publishedAt)}
+        </div>
+      </div>
+    </div>`,
+    )
+    .join("");
+
+  document.querySelector("#news-board").innerHTML = newsHTML;
 };
 
-const errorRender = (errorMessage) => {
-  const errorHTML = `<div class="alert alert-danger" role="alert">
-  A simple danger alert—check it out!
-  ${errorMessage}
-  </div>`;
-
-  document.querySelector("#news-board").innerHTML = errorHTML;
+// 에러
+const errorRender = (message) => {
+  document.querySelector("#news-board").innerHTML = `
+    <div class="alert alert-danger">${message}</div>
+  `;
 };
+
+// 페이지네이션
+const paginationRender = () => {
+  const totalPages = Math.ceil(totalResults / pageSize);
+  const pageGroup = Math.ceil(page / groupSize);
+
+  let lastPage = pageGroup * groupSize;
+  if (lastPage > totalPages) lastPage = totalPages;
+
+  const firstPage =
+    lastPage - (groupSize - 1) <= 0 ? 1 : lastPage - (groupSize - 1);
+
+  let paginationHTML = "";
+
+  // << 처음
+  if (page > 1) {
+    paginationHTML += `
+      <li class="page-item" onclick="moveToPage(1)">
+        <a class="page-link">&laquo;&laquo;</a>
+      </li>`;
+  }
+
+  // < 이전
+  if (page > 1) {
+    paginationHTML += `
+      <li class="page-item" onclick="moveToPage(${page - 1})">
+        <a class="page-link">&laquo;</a>
+      </li>`;
+  }
+
+  // 숫자
+  for (let i = firstPage; i <= lastPage; i++) {
+    paginationHTML += `
+      <li class="page-item ${i === page ? "active" : ""}" 
+          onclick="moveToPage(${i})">
+        <a class="page-link">${i}</a>
+      </li>`;
+  }
+
+  // > 다음
+  if (page < totalPages) {
+    paginationHTML += `
+      <li class="page-item" onclick="moveToPage(${page + 1})">
+        <a class="page-link">&raquo;</a>
+      </li>`;
+  }
+
+  // >> 마지막
+  if (page < totalPages) {
+    paginationHTML += `
+      <li class="page-item" onclick="moveToPage(${totalPages})">
+        <a class="page-link">&raquo;&raquo;</a>
+      </li>`;
+  }
+
+  document.querySelector(".pagination").innerHTML = paginationHTML;
+};
+
+// 페이지 이동
+const moveToPage = (pageNum) => {
+  const totalPages = Math.ceil(totalResults / pageSize);
+
+  if (pageNum < 1 || pageNum > totalPages) return;
+
+  page = pageNum;
+  getNews();
+};
+
 getLatestNews();
 
 // 1. 버튼들에 클릭이벤트 주기
